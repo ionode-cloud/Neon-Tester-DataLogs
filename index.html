@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon DataLogs</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        nav {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            padding: 0 32px;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .35);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 10px;
+            height: 10px;
+            background: #38bdf8;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #38bdf8;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .6;
+                transform: scale(.8)
+            }
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: .5px;
+        }
+
+        .nav-title span {
+            color: #38bdf8;
+        }
+
+        .nav-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .socket-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #94a3b8;
+            background: rgba(255, 255, 255, .07);
+            border: 1px solid rgba(255, 255, 255, .12);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .socket-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #ef4444;
+            transition: background .4s;
+        }
+
+        .socket-dot.connected {
+            background: #22c55e;
+            box-shadow: 0 0 6px #22c55e;
+        }
+
+        .btn-download {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity .2s, transform .1s;
+            box-shadow: 0 2px 8px rgba(21, 128, 61, .4);
+        }
+
+        .btn-download:hover:not(:disabled) {
+            opacity: .9;
+            transform: translateY(-1px);
+        }
+
+        .btn-download:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-download svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .btn-delete {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity .2s, transform .1s;
+            box-shadow: 0 2px 8px rgba(185, 28, 28, .4);
+        }
+
+        .btn-delete:hover:not(:disabled) {
+            opacity: .9;
+            transform: translateY(-1px);
+        }
+
+        .btn-delete:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-delete svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        /* Delete Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .55);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 440px;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+            transform: scale(.94);
+            transition: transform .2s;
+        }
+
+        .modal-overlay.open .modal {
+            transform: scale(1);
+        }
+
+        .modal-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #fee2e2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-icon svg {
+            width: 24px;
+            height: 24px;
+            color: #dc2626;
+            stroke: #dc2626;
+        }
+
+        .modal h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+
+        .modal p {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #334155;
+            background: #f8fafc;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+            margin-bottom: 24px;
+            transition: border-color .2s;
+        }
+
+        .modal select:focus {
+            border-color: #3b82f6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-actions button {
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity .2s;
+        }
+
+        .btn-cancel {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-cancel:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-confirm-delete {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fff;
+            border: none;
+            box-shadow: 0 2px 8px rgba(185, 28, 28, .35);
+        }
+
+        .btn-confirm-delete:hover:not(:disabled) {
+            opacity: .88;
+        }
+
+        .btn-confirm-delete:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .modal-progress {
+            margin-top: 16px;
+            font-size: 13px;
+            color: #64748b;
+            display: none;
+            text-align: center;
+        }
+
+        /* Toast */
+        .toast-wrap {
+            position: fixed;
+            top: 74px;
+            right: 20px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: #0f172a;
+            color: #f8fafc;
+            border-left: 4px solid #38bdf8;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .3);
+            max-width: 320px;
+            animation: slideIn .3s ease;
+            position: relative;
+        }
+
+        .toast.success {
+            border-left-color: #22c55e;
+        }
+
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0)
+            }
+        }
+
+        /* Page */
+        .page {
+            padding: 28px 32px 40px;
+        }
+
+        /* Stats */
+        .summary {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 12px 22px;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, .08);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 130px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .stat-value.blue {
+            color: #0369a1;
+        }
+
+        .stat-value.green {
+            color: #16a34a;
+        }
+
+        #lastUpdate {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-left: auto;
+        }
+
+        /* Table card */
+        .table-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .09);
+            overflow: hidden;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1100px;
+        }
+
+        thead tr {
+            background: linear-gradient(90deg, #0f172a 0%, #1e40af 100%);
+        }
+
+        th {
+            padding: 13px 14px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            border-right: 1px solid rgba(255, 255, 255, .08);
+        }
+
+        th:last-child {
+            border-right: none;
+        }
+
+        td {
+            padding: 11px 14px;
+            font-size: 13.5px;
+            color: #334155;
+            border-bottom: 1px solid #f1f5f9;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            transition: background .15s;
+        }
+
+        tbody tr:hover td {
+            background: #eff6ff;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .new-row td {
+            animation: highlight 2.5s ease forwards;
+        }
+
+        @keyframes highlight {
+            0% {
+                background: #fef9c3
+            }
+
+            100% {
+                background: transparent
+            }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-true {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-false {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .row-num {
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .state-row td {
+            text-align: center;
+            padding: 56px 20px;
+            font-size: 15px;
+            color: #64748b;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-msg {
+            color: #dc2626;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-top: 1px solid #f1f5f9;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .page-info {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .page-info b {
+            color: #0f172a;
+        }
+
+        .page-btns {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .page-btns button {
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #374151;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+            min-width: 36px;
+            font-family: inherit;
+        }
+
+        .page-btns button:hover:not(:disabled) {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+        }
+
+        .page-btns button.active {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+            color: #fff;
+        }
+
+        .page-btns button:disabled {
+            opacity: .4;
+            cursor: default;
+        }
+
+        .page-btns .ellipsis {
+            padding: 6px 4px;
+            color: #94a3b8;
+            border: none;
+            background: none;
+            cursor: default;
+            font-size: 13px;
+        }
+
+        /* ── Responsive ─────────────────────────────────────────────────── */
+
+        /* Tablet – 1024px */
+        @media (max-width: 1024px) {
+            .page { padding: 20px 20px 32px; }
+            nav   { padding: 0 20px; }
+            .summary { gap: 12px; }
+            .stat-card { padding: 10px 16px; min-width: 110px; }
+            .stat-value { font-size: 20px; }
+        }
+
+        /* Large mobile / small tablet – 768px */
+        @media (max-width: 768px) {
+            nav { padding: 0 14px; height: 56px; gap: 8px; }
+            .nav-title { font-size: 17px; }
+            .nav-right { gap: 8px; }
+
+            /* Shrink buttons – show icon + short label */
+            .btn-download,
+            .btn-delete { padding: 7px 11px; font-size: 12px; gap: 5px; }
+
+            .socket-badge { display: none; }
+
+            .page { padding: 14px 14px 28px; }
+
+            .summary {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            #lastUpdate {
+                grid-column: 1 / -1;
+                margin-left: 0;
+                text-align: right;
+            }
+            .stat-card { min-width: unset; width: 100%; padding: 10px 14px; }
+            .stat-value { font-size: 20px; }
+
+            .pagination {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 12px 14px;
+            }
+            .page-btns { flex-wrap: wrap; }
+            .page-btns button { padding: 6px 10px; font-size: 12px; min-width: 32px; }
+
+            /* Modal full-width */
+            .modal { padding: 24px 18px; margin: 12px; border-radius: 12px; }
+            .modal h2 { font-size: 16px; }
+
+            /* Toast */
+            .toast-wrap { right: 10px; left: 10px; }
+            .toast { max-width: 100%; }
+        }
+
+        /* Mobile – 480px */
+        @media (max-width: 480px) {
+            nav { padding: 0 10px; height: 52px; }
+            .nav-title { font-size: 15px; }
+
+            /* Icon-only buttons */
+            .btn-download .btn-label,
+            .btn-delete   .btn-label { display: none; }
+            .btn-download,
+            .btn-delete {
+                padding: 7px 9px;
+                min-width: 36px;
+                justify-content: center;
+            }
+            .btn-download svg,
+            .btn-delete   svg { width: 17px; height: 17px; }
+
+            .page { padding: 10px 10px 24px; }
+
+            .summary {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .stat-card { padding: 8px 12px; }
+            .stat-label { font-size: 10px; }
+            .stat-value { font-size: 18px; }
+
+            /* Table – add touch-action for smooth horizontal scroll */
+            .table-wrap {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            td, th { padding: 9px 10px; font-size: 12px; }
+
+            .pagination { padding: 10px 10px; gap: 8px; }
+            .page-info  { font-size: 12px; }
+            .page-btns button { padding: 5px 8px; font-size: 11px; min-width: 28px; }
+
+            .modal { padding: 20px 14px; margin: 8px; }
+            .modal-actions { flex-direction: column-reverse; gap: 8px; }
+            .modal-actions button { width: 100%; text-align: center; padding: 11px; }
+        }
+
+        /* Very small – 360px */
+        @media (max-width: 360px) {
+            .nav-title { font-size: 13px; }
+            .summary { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .stat-value { font-size: 16px; }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- Toast container -->
+    <div class="toast-wrap" id="toastWrap"></div>
+
+    <!-- Navbar -->
+    <nav>
+        <div class="nav-dot"></div>
+        <div class="nav-title">Neon Tester <span>DataLogs</span></div>
+        <div class="nav-right">
+            <div class="socket-badge">
+                <div class="socket-dot" id="socketDot"></div>
+                <span id="socketStatus">Disconnected</span>
+            </div>
+            <button class="btn-download" id="btnDownload" onclick="downloadExcel()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span class="btn-label">Download Excel</span>
+            </button>
+            <button class="btn-delete" id="btnDelete" onclick="openDeleteModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4h6v2" />
+                </svg>
+                <span class="btn-label">Delete Records</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Page -->
+    <div class="page">
+        <div class="summary">
+            <div class="stat-card">
+                <div class="stat-label">Total Records</div>
+                <div class="stat-value blue" id="totalRecords">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Pages</div>
+                <div class="stat-value" id="totalPages">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Per Page</div>
+                <div class="stat-value" id="perPage">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Live Updates</div>
+                <div class="stat-value green" id="liveCount">0</div>
+            </div>
+            <div id="lastUpdate"></div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Device ID</th>
+                            <th>Tilt Angle</th>
+                            <th>Height</th>
+                            <th>Voltage Status</th>
+                            <th>Battery SOC</th>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th>Timestamp</th>
+                            <th>Raw Data</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr class="state-row">
+                            <td colspan="10"><span class="spinner"></span> Loading data…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="paginationBar" style="display:none;">
+                <div class="page-info" id="pageInfo"></div>
+                <div class="page-btns" id="pageBtns"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Libraries -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- Delete Modal -->
+    <div class="modal-overlay" id="deleteModal" onclick="handleOverlayClick(event)">
+        <div class="modal">
+            <div class="modal-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4h6v2" />
+                </svg>
+            </div>
+            <h2>Delete Records by Range</h2>
+            <p>Select the record range you want to permanently delete. This action cannot be undone.</p>
+            <select id="deleteRange">
+                <option value="">— Select a range —</option>
+            </select>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn-confirm-delete" id="btnConfirmDelete" onclick="confirmDelete()">
+                    Delete Selected Range
+                </button>
+            </div>
+            <div class="modal-progress" id="deleteProgress"></div>
+        </div>
+    </div>
+
+    <script>
+        // ── Constants ──────────────────────────────────────────────────────────────
+        const LIMIT = 50;
+        let currentPage = 1;
+        let totalPages = 1;
+        let totalRecords = 0;
+        let liveCount = 0;
+
+        // ── Socket.IO ──────────────────────────────────────────────────────────────
+        const socket = io();
+
+        socket.on('connect', function () {
+            document.getElementById('socketDot').classList.add('connected');
+            document.getElementById('socketStatus').textContent = 'Live';
+            showToast('Socket connected – live updates active', 'success');
+        });
+
+        socket.on('disconnect', function () {
+            document.getElementById('socketDot').classList.remove('connected');
+            document.getElementById('socketStatus').textContent = 'Disconnected';
+            showToast('Socket disconnected', 'error');
+        });
+
+        socket.on('live-update', function (payload) {
+            liveCount++;
+            document.getElementById('liveCount').textContent = liveCount;
+            document.getElementById('totalRecords').textContent = (payload.total || totalRecords).toLocaleString();
+            totalRecords = payload.total || totalRecords;
+
+            var ts = payload.updatedAt ? new Date(payload.updatedAt).toLocaleTimeString() : '';
+            document.getElementById('lastUpdate').textContent = 'Last update: ' + ts;
+
+            showToast('New live record received at ' + ts, 'success');
+
+            // Highlight newest row if on page 1
+            if (currentPage === 1 && payload.latestRecord) {
+                var tbody = document.getElementById('tableBody');
+                var firstRow = tbody.querySelector('tr');
+                if (firstRow && !firstRow.classList.contains('state-row')) {
+                    var item = payload.latestRecord;
+                    var tr = document.createElement('tr');
+                    tr.className = 'new-row';
+                    var vs = (item.voltageStatus || '').toLowerCase();
+                    tr.innerHTML =
+                        '<td class="row-num">NEW</td>' +
+                        '<td>' + (item.deviceId || '—') + '</td>' +
+                        '<td>' + (item.tiltAngle || '—') + '°</td>' +
+                        '<td>' + (item.height || '—') + '</td>' +
+                        '<td><span class="badge badge-' + (vs === 'true' ? 'true' : 'false') + '">' + (item.voltageStatus || '—') + '</span></td>' +
+                        '<td>' + (item.batterySOC || '—') + '%</td>' +
+                        '<td>' + (item.latitude || '—') + '</td>' +
+                        '<td>' + (item.longitude || '—') + '</td>' +
+                        '<td>' + (item.timestamp ? new Date(item.timestamp).toLocaleString() : '—') + '</td>' +
+                        '<td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;">' + (item.rawData || '—') + '</td>';
+                    tbody.insertBefore(tr, firstRow);
+                    setTimeout(function () { tr.remove(); }, 4000);
+                }
+            }
+        });
+
+        // ── Delete Modal ────────────────────────────────────────────────────────────
+        function openDeleteModal() {
+            if (totalRecords === 0) { showToast('No records loaded yet.', 'error'); return; }
+            var sel = document.getElementById('deleteRange');
+            sel.innerHTML = '<option value="">— Select a range —</option>';
+            for (var pg = 1; pg <= totalPages; pg++) {
+                var start = (pg - 1) * LIMIT + 1;
+                var end = Math.min(pg * LIMIT, totalRecords);
+                var opt = document.createElement('option');
+                opt.value = pg;
+                opt.textContent = 'Records ' + start + ' – ' + end + '  (Page ' + pg + ')';
+                sel.appendChild(opt);
+            }
+            document.getElementById('deleteProgress').style.display = 'none';
+            document.getElementById('deleteProgress').textContent = '';
+            document.getElementById('btnConfirmDelete').disabled = false;
+            document.getElementById('btnConfirmDelete').textContent = 'Delete Selected Range';
+            document.getElementById('deleteModal').classList.add('open');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('open');
+        }
+
+        function handleOverlayClick(e) {
+            if (e.target === document.getElementById('deleteModal')) closeDeleteModal();
+        }
+
+        async function confirmDelete() {
+            var sel = document.getElementById('deleteRange');
+            var page = sel.value;
+            if (!page) { showToast('Please select a range first.', 'error'); return; }
+
+            var start = (parseInt(page) - 1) * LIMIT + 1;
+            var end = Math.min(parseInt(page) * LIMIT, totalRecords);
+
+            var btn = document.getElementById('btnConfirmDelete');
+            var progress = document.getElementById('deleteProgress');
+            btn.disabled = true;
+            btn.textContent = 'Deleting…';
+            progress.style.display = 'block';
+            progress.textContent = 'Deleting records ' + start + ' – ' + end + '…';
+
+            try {
+                var res = await fetch('/api/delete-range?page=' + page, { method: 'DELETE' });
+                var json = await res.json();
+
+                if (json.success) {
+                    showToast('Deleted ' + json.deleted + ' records (range ' + start + '–' + end + ')', 'success');
+                    closeDeleteModal();
+                    // Reload current page (may shift)
+                    var reloadPage = currentPage > totalPages - 1 ? Math.max(1, currentPage - 1) : currentPage;
+                    loadPage(reloadPage);
+                } else {
+                    throw new Error(json.error || 'Delete failed');
+                }
+            } catch (err) {
+                progress.textContent = 'Error: ' + err.message;
+                showToast('Delete failed: ' + err.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Delete Selected Range';
+            }
+        }
+
+        // ── Load page ──────────────────────────────────────────────────────────────
+        async function loadPage(page) {
+            currentPage = page;
+            var tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '<tr class="state-row"><td colspan="10"><span class="spinner"></span> Loading page ' + page + '…</td></tr>';
+            document.getElementById('paginationBar').style.display = 'none';
+
+            try {
+                var res = await fetch('/api/history?page=' + page + '&limit=' + LIMIT);
+                var json = await res.json();
+                var data = json.data || [];
+                var pg = json.pagination || {};
+
+                totalRecords = pg.total || data.length;
+                totalPages = pg.pages || 1;
+                var limit = pg.limit || LIMIT;
+                var offset = (page - 1) * limit;
+
+                document.getElementById('totalRecords').textContent = totalRecords.toLocaleString();
+                document.getElementById('totalPages').textContent = totalPages;
+                document.getElementById('perPage').textContent = limit;
+
+                tbody.innerHTML = '';
+                if (!data.length) {
+                    tbody.innerHTML = '<tr class="state-row"><td colspan="10">No records found.</td></tr>';
+                    return;
+                }
+
+                data.forEach(function (item, i) {
+                    var tr = document.createElement('tr');
+                    var vs = (item.voltageStatus || '').toLowerCase();
+                    tr.innerHTML =
+                        '<td class="row-num">' + (offset + i + 1) + '</td>' +
+                        '<td>' + (item.deviceId || '—') + '</td>' +
+                        '<td>' + (item.tiltAngle || '—') + '°</td>' +
+                        '<td>' + (item.height || '—') + '</td>' +
+                        '<td><span class="badge badge-' + (vs === 'true' ? 'true' : 'false') + '">' + (item.voltageStatus || '—') + '</span></td>' +
+                        '<td>' + (item.batterySOC || '—') + '%</td>' +
+                        '<td>' + (item.latitude || '—') + '</td>' +
+                        '<td>' + (item.longitude || '—') + '</td>' +
+                        '<td>' + (item.timestamp ? new Date(item.timestamp).toLocaleString() : '—') + '</td>' +
+                        '<td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;">' + (item.rawData || '—') + '</td>';
+                    tbody.appendChild(tr);
+                });
+
+                renderPagination();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (err) {
+                tbody.innerHTML = '<tr class="state-row"><td colspan="10" class="error-msg">Failed to load: ' + err.message + '</td></tr>';
+                console.error(err);
+            }
+        }
+
+        // ── Pagination ─────────────────────────────────────────────────────────────
+        function renderPagination() {
+            var bar = document.getElementById('paginationBar');
+            var info = document.getElementById('pageInfo');
+            var btnWrap = document.getElementById('pageBtns');
+            var start = (currentPage - 1) * LIMIT + 1;
+            var end = Math.min(currentPage * LIMIT, totalRecords);
+            info.innerHTML = 'Showing <b>' + start + '–' + end + '</b> of <b>' + totalRecords.toLocaleString() + '</b> records';
+            btnWrap.innerHTML = '';
+
+            var pages = buildPageRange(currentPage, totalPages);
+            btnWrap.appendChild(makeBtn('‹ Prev', function () { loadPage(currentPage - 1); }, currentPage === 1));
+            pages.forEach(function (p) {
+                if (p === '...') {
+                    var el = document.createElement('button'); el.className = 'ellipsis'; el.textContent = '…'; btnWrap.appendChild(el);
+                } else {
+                    var el = makeBtn(p, (function (pg) { return function () { loadPage(pg); }; })(p), false);
+                    if (p === currentPage) el.classList.add('active');
+                    btnWrap.appendChild(el);
+                }
+            });
+            btnWrap.appendChild(makeBtn('Next ›', function () { loadPage(currentPage + 1); }, currentPage === totalPages));
+            bar.style.display = 'flex';
+        }
+
+        function makeBtn(label, onClick, disabled) {
+            var el = document.createElement('button');
+            el.textContent = label; el.disabled = disabled;
+            el.addEventListener('click', onClick); return el;
+        }
+
+        function buildPageRange(cur, total) {
+            if (total <= 7) { var a = []; for (var i = 1; i <= total; i++) a.push(i); return a; }
+            var pages = [1];
+            if (cur > 3) pages.push('...');
+            for (var p = Math.max(2, cur - 1); p <= Math.min(total - 1, cur + 1); p++) pages.push(p);
+            if (cur < total - 2) pages.push('...');
+            pages.push(total); return pages;
+        }
+
+        // ── Excel Download ─────────────────────────────────────────────────────────
+        async function downloadExcel() {
+            var btn = document.getElementById('btnDownload');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></span> Downloading…';
+            showToast('Fetching all ' + totalRecords.toLocaleString() + ' records for download…');
+
+            try {
+                var res = await fetch('/api/all');
+                var json = await res.json();
+
+                if (!json.success) throw new Error(json.error || 'Download failed');
+
+                var rows = json.data.map(function (item, i) {
+                    return {
+                        '#': i + 1,
+                        'Device ID': item.deviceId || '',
+                        'Tilt Angle (°)': item.tiltAngle != null ? item.tiltAngle : '',
+                        'Height': item.height != null ? item.height : '',
+                        'Voltage Status': item.voltageStatus || '',
+                        'Battery SOC (%)': item.batterySOC != null ? item.batterySOC : '',
+                        'Latitude': item.latitude != null ? item.latitude : '',
+                        'Longitude': item.longitude != null ? item.longitude : '',
+                        'Timestamp': item.timestamp ? new Date(item.timestamp).toLocaleString() : '',
+                        'Raw Data': item.rawData || ''
+                    };
+                });
+
+                var ws = XLSX.utils.json_to_sheet(rows);
+
+                // Column widths
+                ws['!cols'] = [
+                    { wch: 6 }, { wch: 20 }, { wch: 14 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 24 }, { wch: 60 }
+                ];
+
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Device History');
+
+                var fileName = 'NeonDataLogs_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+                XLSX.writeFile(wb, fileName);
+
+                showToast('Downloaded ' + json.total.toLocaleString() + ' records as ' + fileName, 'success');
+            } catch (err) {
+                showToast('Download failed: ' + err.message, 'error');
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Excel';
+            }
+        }
+
+        // ── Toast ──────────────────────────────────────────────────────────────────
+        function showToast(msg, type) {
+            var wrap = document.getElementById('toastWrap');
+            var t = document.createElement('div');
+            t.className = 'toast' + (type ? ' ' + type : '');
+            t.textContent = msg;
+            wrap.appendChild(t);
+            setTimeout(function () { t.remove(); }, 3500);
+        }
+
+        // ── Init ───────────────────────────────────────────────────────────────────
+        loadPage(1);
+    </script>
+</body>
+
+</html>
